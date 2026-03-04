@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    container_name: polyglot-app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/polyglot?sslmode=disable
+      PORT: 8080
+
+  db:
+    image: postgres:13
+    container_name: polyglot-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: polyglot
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./seeds/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d polyglot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
